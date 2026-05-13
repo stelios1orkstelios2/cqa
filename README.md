@@ -1,1 +1,1 @@
-# cqa
+# Code Quality Analyzer
