@@ -1,10 +1,17 @@
 package gr.uom.cqa.logic;
 
+import com.github.javaparser.StaticJavaParser;
+import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.ConditionalExpr;
+import com.github.javaparser.ast.stmt.*;
 import gr.uom.cqa.model.Issue;
 import gr.uom.cqa.model.Report;
+import gr.uom.cqa.model.Severity;
+
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CodeAnalyzer {
 
@@ -17,20 +24,20 @@ public class CodeAnalyzer {
     public Report runAnalysis(String codeContent) {
         Report report = new Report();
         String[] codeLines = codeContent.split("\\r?\\n");
-
         int loc = codeLines.length;
-        int noc = 0;
-        int nom = 0;
 
-        Pattern classPattern = Pattern.compile("class\\s+[A-Za-z0-9_]+");
-        Pattern methodPattern = Pattern.compile("(public|protected|private|static|\\s) +[\\w\\<\\>\\[\\]]+\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(");
+        try {
+            CompilationUnit cu = StaticJavaParser.parse(codeContent);
+            int noc = cu.findAll(ClassOrInterfaceDeclaration.class).size();
+            int nom = cu.findAll(MethodDeclaration.class).size();
+            int totalCc = calculateCyclomaticComplexity(cu);
 
-        for (String line : codeLines) {
-            if (classPattern.matcher(line).find()) noc++;
-            if (methodPattern.matcher(line).find()) nom++;
+            report.setMetrics(loc, noc, nom, totalCc);
+
+        } catch (Exception e) {
+            report.addIssue(new Issue(1, "Συντακτικό Σφάλμα Java: Ο κώδικας δεν μπορούσε να αναλυθεί πλήρως.", Severity.CRITICAL));
+            report.setMetrics(loc, 0, 0, 0);
         }
-
-        report.setMetrics(loc, noc, nom);
 
         List<Issue> foundIssues = ruleEngine.evaluateAll(codeLines);
         for (Issue issue : foundIssues) {
@@ -39,5 +46,31 @@ public class CodeAnalyzer {
 
         report.calculateScore(loc);
         return report;
+    }
+
+    /**
+     * Υπολογίζει την Κυκλοματική Πολυπλοκότητα βρίσκοντας όλα τα μονοπάτια ροής (if, for, while κλπ).
+     */
+    private int calculateCyclomaticComplexity(CompilationUnit cu) {
+        int totalCc = 0;
+
+        for (MethodDeclaration method : cu.findAll(MethodDeclaration.class)) {
+            int methodCc = 1;
+
+            methodCc += method.findAll(IfStmt.class).size();
+            methodCc += method.findAll(ForStmt.class).size();
+            methodCc += method.findAll(ForEachStmt.class).size();
+            methodCc += method.findAll(WhileStmt.class).size();
+            methodCc += method.findAll(DoStmt.class).size();
+            methodCc += method.findAll(CatchClause.class).size();
+            methodCc += method.findAll(ConditionalExpr.class).size();
+
+            methodCc += method.findAll(BinaryExpr.class).stream()
+                    .filter(expr -> expr.getOperator() == BinaryExpr.Operator.AND || expr.getOperator() == BinaryExpr.Operator.OR)
+                    .count();
+
+            totalCc += methodCc;
+        }
+        return totalCc;
     }
 }

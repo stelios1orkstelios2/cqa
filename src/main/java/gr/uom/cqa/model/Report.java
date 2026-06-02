@@ -9,6 +9,7 @@ public class Report {
     private int linesOfCode;
     private int numberOfClasses;
     private int numberOfMethods;
+    private int cyclomaticComplexity;
 
     public Report() {
         this.issues = new ArrayList<>();
@@ -16,23 +17,23 @@ public class Report {
     }
 
     public void addIssue(Issue issue) {
-        if (issue != null) {
-            issues.add(issue);
-        }
+        if (issue != null) { issues.add(issue); }
     }
 
     public List<Issue> getIssues() { return new ArrayList<>(issues); }
     public int getFinalScore() { return finalScore; }
 
-    public void setMetrics(int loc, int noc, int nom) {
+    public void setMetrics(int loc, int noc, int nom, int cc) {
         this.linesOfCode = loc;
         this.numberOfClasses = noc;
         this.numberOfMethods = nom;
+        this.cyclomaticComplexity = cc;
     }
 
     public int getLinesOfCode() { return linesOfCode; }
     public int getNumberOfClasses() { return numberOfClasses; }
     public int getNumberOfMethods() { return numberOfMethods; }
+    public int getCyclomaticComplexity() { return cyclomaticComplexity; }
 
     public void calculateScore(int totalLines) {
         int penaltyPerIssue = 5;
