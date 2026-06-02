@@ -90,27 +90,23 @@ public class MainUI extends Application {
         });
 
         saveBtn.setOnAction(e -> {
-            if (currentReport != null) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Αποθήκευση Αναφοράς (Report)");
-                fileChooser.setInitialFileName("cqa_report.txt");
-                fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+            StringBuilder output = new StringBuilder();
+            output.append("=== ΤΕΛΙΚΟ SCORE: ").append(currentReport.getFinalScore()).append("/100 ===\n\n");
+            output.append("--- ΜΕΤΡΙΚΕΣ ΠΟΙΟΤΗΤΑΣ (Metrics) ---\n");
+            output.append("Lines of Code (LoC): ").append(currentReport.getLinesOfCode()).append("\n");
+            output.append("Number of Classes (NOC): ").append(currentReport.getNumberOfClasses()).append("\n");
+            output.append("Number of Methods (NOM): ").append(currentReport.getNumberOfMethods()).append("\n\n");
 
-                File destFile = fileChooser.showSaveDialog(primaryStage);
-
-                if (destFile != null) {
-                    try {
-                        fileManager.saveReport(currentReport, destFile);
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("Επιτυχία");
-                        alert.setHeaderText(null);
-                        alert.setContentText("Η αναφορά αποθηκεύτηκε επιτυχώς!");
-                        alert.showAndWait();
-                    } catch (IOException ex) {
-                        resultArea.appendText("\n\n[Σφάλμα κατά την αποθήκευση: " + ex.getMessage() + "]");
-                    }
+            output.append("--- ΠΡΟΒΛΗΜΑΤΑ ΠΟΥ ΕΝΤΟΠΙΣΤΗΚΑΝ ---\n");
+            if (currentReport.getIssues().isEmpty()) {
+                output.append("Τέλειος κώδικας! Δεν βρέθηκαν σφάλματα.\n");
+            } else {
+                for (Issue issue : currentReport.getIssues()) {
+                    output.append(issue.toString()).append("\n");
                 }
             }
+
+            resultArea.setText(output.toString());
         });
 
         VBox mainLayout = new VBox(15);

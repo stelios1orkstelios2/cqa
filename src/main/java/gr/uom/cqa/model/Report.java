@@ -3,10 +3,12 @@ package gr.uom.cqa.model;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class Report {
     private final List<Issue> issues;
     private int finalScore;
+    private int linesOfCode;
+    private int numberOfClasses;
+    private int numberOfMethods;
 
     public Report() {
         this.issues = new ArrayList<>();
@@ -19,23 +21,22 @@ public class Report {
         }
     }
 
-    public List<Issue> getIssues() {
-        return new ArrayList<>(issues);
+    public List<Issue> getIssues() { return new ArrayList<>(issues); }
+    public int getFinalScore() { return finalScore; }
+
+    public void setMetrics(int loc, int noc, int nom) {
+        this.linesOfCode = loc;
+        this.numberOfClasses = noc;
+        this.numberOfMethods = nom;
     }
 
-    /**
-     * Calculates the score based on a simple penalty system.
-     * For example, deduct 5 points for every issue found.
-     * * @param totalLines The total number of lines analyzed (can be used for more complex scoring later).
-     */
+    public int getLinesOfCode() { return linesOfCode; }
+    public int getNumberOfClasses() { return numberOfClasses; }
+    public int getNumberOfMethods() { return numberOfMethods; }
+
     public void calculateScore(int totalLines) {
         int penaltyPerIssue = 5;
         int totalPenalty = issues.size() * penaltyPerIssue;
-
         finalScore = Math.max(0, 100 - totalPenalty);
-    }
-
-    public int getFinalScore() {
-        return finalScore;
     }
 }
