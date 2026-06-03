@@ -66,16 +66,13 @@ public class Report {
         if (numberOfMethods > 0) {
             double avgCc = (double) cyclomaticComplexity / numberOfMethods;
             if (avgCc > 10.0) { 
-                // Το 10 θεωρείται το όριο του καλού κώδικα. Πάνω από αυτό αρχίζουν τα "σπαγγέτι".
                 totalPenalty += 15.0;
             } else if (avgCc > 5.0) {
                 totalPenalty += 5.0;
             }
         }
 
-        // 3. Εξισορρόπηση με βάση το μέγεθος του αρχείου (LoC)
         if (totalLines > 0) {
-            // Μειώνουμε λίγο την ποινή για τα πολύ μεγάλα αρχεία
             double sizeFactor = Math.log10(totalLines); 
             if (sizeFactor > 1) {
                 totalPenalty = totalPenalty / (sizeFactor * 0.8);

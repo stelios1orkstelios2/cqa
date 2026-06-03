@@ -32,7 +32,6 @@ public class MainUI extends Application {
     private final FileManager fileManager = new FileManager();
     private Report currentReport;
 
-    // --- Regex για το Syntax Highlighting της Java ---
     private static final String[] KEYWORDS = new String[] {
             "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const",
             "continue", "default", "do", "double", "else", "enum", "extends", "final", "finally", "float",
@@ -70,16 +69,12 @@ public class MainUI extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Code Quality Analyzer (CQA) - Pro Edition");
-
         Label titleLabel = new Label("Εισαγωγή Κώδικα Java προς Ανάλυση:");
         titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
-        // --- ΕΔΩ ΜΠΑΙΝΕΙ ΤΟ ΝΕΟ CODE AREA ΑΝΤΙ ΓΙΑ TEXTAREA ---
         CodeArea codeArea = new CodeArea();
-        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea)); // Αρίθμηση γραμμών!
-        VBox.setVgrow(codeArea, Priority.ALWAYS); // Να πιάνει όλο τον διαθέσιμο χώρο
+        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
+        VBox.setVgrow(codeArea, Priority.ALWAYS); 
 
-        // Listener για να χρωματίζει τον κώδικα κάθε φορά που πληκτρολογείς ή κάνεις paste
         codeArea.textProperty().addListener((obs, oldText, newText) -> {
             codeArea.setStyleSpans(0, computeHighlighting(newText));
         });
@@ -117,20 +112,15 @@ public class MainUI extends Application {
         Button uploadBtn = new Button("Ανέβασμα (.java)");
         Button analyzeBtn = new Button("Ανάλυση Κώδικα");
         analyzeBtn.setStyle("-fx-background-color: #005088; -fx-text-fill: white; -fx-font-weight: bold;");
-
         Button saveBtn = new Button("Αποθήκευση Αναφοράς");
         saveBtn.setDisable(true);
-
         HBox buttonBox = new HBox(10, uploadBtn, analyzeBtn, saveBtn);
-
         Label resultLabel = new Label("Αποτελέσματα Αξιολόγησης:");
         resultLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
-
         TextArea resultArea = new TextArea();
         resultArea.setEditable(false);
         resultArea.setPrefHeight(200);
 
-        // --- Events ---
         uploadBtn.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java Files", "*.java"));
@@ -138,7 +128,7 @@ public class MainUI extends Application {
             if (selectedFile != null) {
                 try {
                     String content = Files.readString(selectedFile.toPath());
-                    codeArea.replaceText(0, codeArea.getLength(), content); // Σωστός τρόπος για το CodeArea
+                    codeArea.replaceText(0, codeArea.getLength(), content);
                     resultArea.setText("Το αρχείο φορτώθηκε επιτυχώς! Πάτα 'Ανάλυση Κώδικα'.");
                 } catch (Exception ex) {
                     resultArea.setText("Σφάλμα: " + ex.getMessage());
@@ -227,13 +217,11 @@ public class MainUI extends Application {
         mainLayout.getChildren().addAll(titleLabel, codeArea, buttonBox, resultLabel, resultArea);
 
         Scene scene = new Scene(mainLayout, 850, 700);
-        // Εισαγωγή του CSS
         scene.getStylesheets().add(getClass().getResource("/gr/uom/cqa/java-keywords.css").toExternalForm());
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    // Μέθοδος που υπολογίζει τα χρώματα (Syntax Highlighting)
     private static StyleSpans<Collection<String>> computeHighlighting(String text) {
         Matcher matcher = PATTERN.matcher(text);
         int lastKwEnd = 0;
