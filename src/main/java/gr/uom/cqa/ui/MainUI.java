@@ -48,6 +48,10 @@ public class MainUI extends Application {
     private static final String SEMICOLON_PATTERN = "\\;";
     private static final String STRING_PATTERN = "\"([^\"\\\\]|\\\\.)*\"";
     private static final String COMMENT_PATTERN = "//[^\n]*" + "|" + "/\\*(.|\\R)*?\\*/";
+    private static final String NUMBER_PATTERN = "\\b\\d+(\\.\\d+)?\\b";
+    private static final String ANNOTATION_PATTERN = "@[a-zA-Z_][a-zA-Z0-9_]*";
+    private static final String METHOD_PATTERN = "\\b[a-zA-Z_][a-zA-Z0-9_]*(?=\\s*\\()";
+    private static final String CLASS_PATTERN = "\\b[A-Z][a-zA-Z0-9_]*\\b";
 
     private static final Pattern PATTERN = Pattern.compile(
             "(?<KEYWORD>" + KEYWORD_PATTERN + ")"
@@ -57,6 +61,10 @@ public class MainUI extends Application {
                     + "|(?<SEMICOLON>" + SEMICOLON_PATTERN + ")"
                     + "|(?<STRING>" + STRING_PATTERN + ")"
                     + "|(?<COMMENT>" + COMMENT_PATTERN + ")"
+                    + "|(?<NUMBER>" + NUMBER_PATTERN + ")"
+                    + "|(?<ANNOTATION>" + ANNOTATION_PATTERN + ")"
+                    + "|(?<METHOD>" + METHOD_PATTERN + ")"
+                    + "|(?<CLASS>" + CLASS_PATTERN + ")"
     );
 
     @Override
@@ -74,6 +82,36 @@ public class MainUI extends Application {
         // Listener για να χρωματίζει τον κώδικα κάθε φορά που πληκτρολογείς ή κάνεις paste
         codeArea.textProperty().addListener((obs, oldText, newText) -> {
             codeArea.setStyleSpans(0, computeHighlighting(newText));
+        });
+
+        codeArea.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ENTER) {
+                String currentLineText = codeArea.getParagraph(codeArea.getCurrentParagraph()).getText();
+                Matcher m = Pattern.compile("^\\s+").matcher(currentLineText);
+                String indent = m.find() ? m.group() : "";
+                
+                codeArea.insertText(codeArea.getCaretPosition(), "\n" + indent);
+                e.consume(); 
+            }
+        });
+
+        codeArea.addEventHandler(javafx.scene.input.KeyEvent.KEY_TYPED, e -> {
+            String character = e.getCharacter();
+            String closingChar = "";
+            
+            switch (character) {
+                case "{": closingChar = "}"; break;
+                case "(": closingChar = ")"; break;
+                case "[": closingChar = "]"; break;
+                case "\"": closingChar = "\""; break;
+                case "'": closingChar = "'"; break;
+            }
+
+            if (!closingChar.isEmpty()) {
+                int caretPos = codeArea.getCaretPosition();
+                codeArea.insertText(caretPos, closingChar);
+                codeArea.moveTo(caretPos); 
+            }
         });
 
         Button uploadBtn = new Button("Ανέβασμα (.java)");
@@ -115,27 +153,56 @@ public class MainUI extends Application {
                 return;
             }
 
+            analyzeBtn.setDisable(true);
+            saveBtn.setDisable(true);
+
             currentReport = analyzer.runAnalysis(code);
 
-            StringBuilder output = new StringBuilder();
-            output.append("=== ΤΕΛΙΚΟ SCORE: ").append(currentReport.getFinalScore()).append("/100 ===\n\n");
+            String[] spinner = {"|", "/", "-", "\\"}; 
+            final int[] frame = {0};
 
-            output.append("--- ΜΕΤΡΙΚΕΣ ΠΟΙΟΤΗΤΑΣ ---\n");
-            output.append("LoC: ").append(currentReport.getLinesOfCode()).append(" | ");
-            output.append("NOC: ").append(currentReport.getNumberOfClasses()).append(" | ");
-            output.append("NOM: ").append(currentReport.getNumberOfMethods()).append(" | ");
-            output.append("CC: ").append(currentReport.getCyclomaticComplexity()).append("\n\n");
+            javafx.animation.Timeline loadingAnimation = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(
+                    javafx.util.Duration.millis(50), 
+                    event -> {
+                        resultArea.setText("Γίνεται ανάλυση κώδικα... " + spinner[frame[0]]);
+                        frame[0] = (frame[0] + 1) % spinner.length; 
+                    }
+                )
+            );
+            loadingAnimation.setCycleCount(javafx.animation.Animation.INDEFINITE); 
+            loadingAnimation.play(); 
 
-            output.append("--- ΠΡΟΒΛΗΜΑΤΑ ---\n");
-            if (currentReport.getIssues().isEmpty()) {
-                output.append("Εξαιρετικά! Δεν βρέθηκαν σφάλματα.\n");
-            } else {
-                for (Issue issue : currentReport.getIssues()) {
-                    output.append(issue.toString()).append("\n");
+    
+            javafx.animation.PauseTransition pause = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(1.5));
+            pause.setOnFinished(event -> {
+
+                loadingAnimation.stop();
+
+                StringBuilder output = new StringBuilder();
+                output.append("=== ΤΕΛΙΚΟ SCORE: ").append(currentReport.getFinalScore()).append("/100 ===\n\n");
+
+                output.append("--- ΜΕΤΡΙΚΕΣ ΠΟΙΟΤΗΤΑΣ ---\n");
+                output.append("LoC: ").append(currentReport.getLinesOfCode()).append(" | ");
+                output.append("NOC: ").append(currentReport.getNumberOfClasses()).append(" | ");
+                output.append("NOM: ").append(currentReport.getNumberOfMethods()).append(" | ");
+                output.append("CC: ").append(currentReport.getCyclomaticComplexity()).append("\n\n");
+
+                output.append("--- ΠΡΟΒΛΗΜΑΤΑ ---\n");
+                if (currentReport.getIssues().isEmpty()) {
+                    output.append("Εξαιρετικά! Δεν βρέθηκαν σφάλματα.\n");
+                } else {
+                    for (Issue issue : currentReport.getIssues()) {
+                        output.append(issue.toString()).append("\n");
+                    }
                 }
-            }
-            resultArea.setText(output.toString());
-            saveBtn.setDisable(false);
+                
+                resultArea.setText(output.toString());
+                analyzeBtn.setDisable(false);
+                saveBtn.setDisable(false);
+            });
+            
+            pause.play();
         });
 
         saveBtn.setOnAction(e -> {
@@ -179,7 +246,11 @@ public class MainUI extends Application {
                             matcher.group("BRACKET") != null ? "bracket" :
                             matcher.group("SEMICOLON") != null ? "semicolon" :
                             matcher.group("STRING") != null ? "string" :
+                            matcher.group("NUMBER") != null ? "number" :
+                            matcher.group("ANNOTATION") != null ? "annotation" :
                             matcher.group("COMMENT") != null ? "comment" :
+                            matcher.group("METHOD") != null ? "method" :      
+                            matcher.group("CLASS") != null ? "clazz" :
                             null; /* never happens */ assert styleClass != null;
             spansBuilder.add(Collections.emptyList(), matcher.start() - lastKwEnd);
             spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());

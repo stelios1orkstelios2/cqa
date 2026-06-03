@@ -1,39 +1,54 @@
-.keyword {
-    -fx-fill: #cc7832;
-    -fx-font-weight: bold;
-}
-.string {
-    -fx-fill: #6a8759;
-}
-.comment {
-    -fx-fill: #808080;
-    -fx-font-style: italic;
-}
-.paren {
-    -fx-fill: #a9b7c6;
-    -fx-font-weight: bold;
-}
-.brace {
-    -fx-fill: #a9b7c6;
-    -fx-font-weight: bold;
-}
-.bracket {
-    -fx-fill: #a9b7c6;
-    -fx-font-weight: bold;
-}
-.semicolon {
-    -fx-fill: #cc7832;
-    -fx-font-weight: bold;
-}
+/* Το γενικό background του editor */
 .styled-text-area {
-    -fx-background-color: #2b2b2b;
-    -fx-text-fill: #a9b7c6;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-font-size: 14px;
+  -fx-background-color: #2b2b2b;
+  -fx-font-family: "Consolas", "Courier New", monospace;
+  -fx-font-size: 14px;
 }
+
+/* Το προεπιλεγμένο χρώμα κειμένου (οτιδήποτε δεν έχει δικό του χρώμα) */
+.styled-text-area .text {
+  -fx-fill: #a9b7c6;
+}
+
+/* --- Χρώματα Syntax Highlighting (πιο δυνατοί κανόνες τώρα) --- */
+.styled-text-area .text.keyword {
+  -fx-fill: #cc7832;
+  -fx-font-weight: bold;
+}
+.styled-text-area .text.string {
+  -fx-fill: #6a8759;
+}
+.styled-text-area .text.comment {
+  -fx-fill: #808080;
+  -fx-font-style: italic;
+}
+.styled-text-area .text.paren,
+.styled-text-area .text.brace,
+.styled-text-area .text.bracket {
+  -fx-fill: #a9b7c6;
+  -fx-font-weight: bold;
+}
+.styled-text-area .text.semicolon {
+  -fx-fill: #cc7832;
+  -fx-font-weight: bold;
+}
+.styled-text-area .text.method {
+  -fx-fill: #ffc66d;
+}
+.styled-text-area .text.clazz {
+  -fx-fill: #9876aa;
+}
+.styled-text-area .text.number {
+  -fx-fill: #6897bb;
+}
+.styled-text-area .text.annotation {
+  -fx-fill: #bbb529;
+}
+
+/* Η μπάρα αριστερά με τους αριθμούς γραμμών */
 .lineno {
-    -fx-background-color: #313335;
-    -fx-text-fill: #606366;
-    -fx-font-family: 'Consolas', 'Courier New', monospace;
-    -fx-padding: 0 5 0 5;
+  -fx-background-color: #313335;
+  -fx-text-fill: #606366;
+  -fx-font-family: "Consolas", "Courier New", monospace;
+  -fx-padding: 0 5 0 5;
 }
