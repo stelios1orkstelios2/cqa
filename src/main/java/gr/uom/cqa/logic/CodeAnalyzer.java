@@ -26,8 +26,10 @@ public class CodeAnalyzer {
         String[] codeLines = codeContent.split("\\r?\\n");
         int loc = codeLines.length;
 
+        CompilationUnit cu = null;
+
         try {
-            CompilationUnit cu = StaticJavaParser.parse(codeContent);
+            cu = StaticJavaParser.parse(codeContent);
             int noc = cu.findAll(ClassOrInterfaceDeclaration.class).size();
             int nom = cu.findAll(MethodDeclaration.class).size();
             int totalCc = calculateCyclomaticComplexity(cu);
@@ -35,11 +37,13 @@ public class CodeAnalyzer {
             report.setMetrics(loc, noc, nom, totalCc);
 
         } catch (Exception e) {
+            report.setSyntaxError(true);
+
             report.addIssue(new Issue(1, "Συντακτικό Σφάλμα Java: Ο κώδικας δεν μπορούσε να αναλυθεί πλήρως.", Severity.CRITICAL));
             report.setMetrics(loc, 0, 0, 0);
         }
 
-        List<Issue> foundIssues = ruleEngine.evaluateAll(codeLines);
+        List<Issue> foundIssues = ruleEngine.evaluateAll(cu, codeLines);
         for (Issue issue : foundIssues) {
             report.addIssue(issue);
         }

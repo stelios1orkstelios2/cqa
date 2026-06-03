@@ -11,9 +11,15 @@ public class Report {
     private int numberOfMethods;
     private int cyclomaticComplexity;
 
+    private boolean hasSyntaxError = false;
+
     public Report() {
         this.issues = new ArrayList<>();
         this.finalScore = 100;
+    }
+
+    public void setSyntaxError(boolean hasSyntaxError) {
+        this.hasSyntaxError = hasSyntaxError;
     }
 
     public void addIssue(Issue issue) {
@@ -36,6 +42,11 @@ public class Report {
     public int getCyclomaticComplexity() { return cyclomaticComplexity; }
 
     public void calculateScore(int totalLines) {
+        if (hasSyntaxError) {
+            this.finalScore = 0;
+            return; 
+        }
+
         double totalPenalty = 0;
 
         for (Issue issue : issues) {

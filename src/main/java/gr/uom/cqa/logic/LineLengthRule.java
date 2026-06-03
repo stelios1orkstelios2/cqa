@@ -1,5 +1,6 @@
 package gr.uom.cqa.logic;
 
+import com.github.javaparser.ast.CompilationUnit;
 import gr.uom.cqa.model.Issue;
 import gr.uom.cqa.model.Severity;
 import java.util.List;
@@ -11,7 +12,7 @@ public class LineLengthRule extends AbstractRule {
     }
 
     @Override
-    public List<Issue> evaluate(String[] codeLines) {
+    public List<Issue> evaluate(CompilationUnit cu, String[] codeLines) {
         List<Issue> issues = createEmptyIssueList();
 
         for (int i = 0; i < codeLines.length; i++) {

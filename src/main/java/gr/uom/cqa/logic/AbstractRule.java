@@ -1,5 +1,6 @@
 package gr.uom.cqa.logic;
 
+import com.github.javaparser.ast.CompilationUnit;
 import gr.uom.cqa.model.Issue;
 import java.util.ArrayList;
 import java.util.List;
